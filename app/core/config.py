@@ -10,6 +10,17 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALG: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    RESET_TOKEN_EXPIRE_MINUTES: int = 30
+
+    FRONTEND_URL: str = "http://localhost:3000"
+    ADMIN_SEED_EMAIL: str = "admin@acorn.com"
+    ADMIN_SEED_PASSWORD: str = "Acorn@123"
+    ADMIN_SEED_ROLE: str = "ADMIN"
+
+    BOOKING_ADMIN_EMAIL: str | None = None
+    RECAPTCHA_SECRET: str | None = None
+
+    MEDIA_DIR: str = "uploads"
 
     MAIL_USERNAME: str
     MAIL_PASSWORD: str

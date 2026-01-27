@@ -4,6 +4,20 @@ class RegisterIn(BaseModel):
     email: EmailStr
     password: str
 
+class LoginIn(BaseModel):
+    email: EmailStr
+    password: str
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    new_password: str
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class MessageOut(BaseModel):
+    message: str
