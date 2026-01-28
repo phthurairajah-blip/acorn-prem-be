@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     RESET_TOKEN_EXPIRE_MINUTES: int = 30
 
+    LOGIN_MAX_ATTEMPTS: int = 10
+    LOGIN_WINDOW_SECONDS: int = 60 * 60
+    LOGIN_BAN_SECONDS: int = 60 * 60
+    FORGOT_PASSWORD_MAX_ATTEMPTS: int = 3
+    FORGOT_PASSWORD_WINDOW_SECONDS: int = 60 * 60 * 24
+    PUBLIC_BLOG_MAX_ATTEMPTS: int = 100
+    PUBLIC_BLOG_WINDOW_SECONDS: int = 60 * 60 * 24
+
     FRONTEND_URL: str = "http://localhost:3000"
     ADMIN_SEED_EMAIL: str = "admin@acorn.com"
     ADMIN_SEED_PASSWORD: str = "Acorn@123"

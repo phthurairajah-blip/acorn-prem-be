@@ -1,30 +1,25 @@
-import time
-from collections import defaultdict, deque
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.deps import get_db
+from app.core.rate_limit import RateLimiter, get_client_ip
 from app.repositories import blog_repo
 from app.schemas.blog import BlogOut
 
 router = APIRouter(prefix="/public/blogs", tags=["public-blogs"])
 
-_RATE_LIMIT = 100
-_WINDOW_SECONDS = 60
-_request_log: dict[str, deque[float]] = defaultdict(deque)
+_public_blog_limiter = RateLimiter(
+    max_attempts=settings.PUBLIC_BLOG_MAX_ATTEMPTS,
+    window_seconds=settings.PUBLIC_BLOG_WINDOW_SECONDS,
+    error_detail="Rate limit exceeded",
+)
 
 
 def rate_limit(request: Request) -> None:
-    ip = request.client.host if request.client else "unknown"
-    now = time.time()
-    window_start = now - _WINDOW_SECONDS
-    bucket = _request_log[ip]
-    while bucket and bucket[0] < window_start:
-        bucket.popleft()
-    if len(bucket) >= _RATE_LIMIT:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    bucket.append(now)
+    ip = get_client_ip(request)
+    _public_blog_limiter.hit(ip)
 
 
 @router.get("/", response_model=list[BlogOut])
