@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 
@@ -14,7 +15,7 @@ class BookingCreate(BaseModel):
 
 
 class BookingOut(BaseModel):
-    id: str
+    id: UUID
     name: str
     email: EmailStr
     phone: str | None = None
