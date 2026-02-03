@@ -13,10 +13,12 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 @router.get("/", response_model=list[BookingOut])
 def list_bookings(
+    skip: int = 0,
+    limit: int = 12,
     db: Session = Depends(get_db),
     _: User = Depends(require_role("ADMIN")),
 ) -> list[BookingOut]:
-    return booking_service.list_bookings(db)
+    return booking_service.list_bookings(db, skip=skip, limit=limit)
 
 
 @router.get("/{booking_id}", response_model=BookingOut)

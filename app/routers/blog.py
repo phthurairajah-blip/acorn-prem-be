@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
+from urllib.parse import urlparse
 
 from app.core.config import settings
 from app.core.deps import get_db, require_role
@@ -35,6 +36,21 @@ def _save_image(file: UploadFile) -> str:
     return f"/media/blogs/{filename}"
 
 
+def _normalize_image_url(image_url: str | None) -> str | None:
+    if not image_url:
+        return None
+    candidate = image_url.strip()
+    if not candidate:
+        return None
+    if candidate.startswith("/"):
+        return candidate
+    parsed = urlparse(candidate)
+    if parsed.scheme in {"http", "https"} and parsed.netloc:
+        return candidate
+    raise HTTPException(status_code=400, detail="Image URL must be a valid http(s) URL or a /media path")
+
+
+@router.get("", response_model=list[BlogOut])
 @router.get("/", response_model=list[BlogOut])
 def list_blogs(
     skip: int = 0,
@@ -57,6 +73,7 @@ def get_blog(
     return blog
 
 
+@router.post("", response_model=BlogOut, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=BlogOut, status_code=status.HTTP_201_CREATED)
 def create_blog(
     title: str = Form(...),
@@ -73,7 +90,7 @@ def create_blog(
     if not category:
         raise HTTPException(status_code=400, detail="Invalid category")
 
-    final_image_url = image_url
+    final_image_url = _normalize_image_url(image_url)
     if image_file is not None:
         final_image_url = _save_image(image_file)
     if not final_image_url:
@@ -113,7 +130,7 @@ def update_blog(
         if not category:
             raise HTTPException(status_code=400, detail="Invalid category")
 
-    final_image_url = image_url
+    final_image_url = _normalize_image_url(image_url)
     if image_file is not None:
         final_image_url = _save_image(image_file)
 

@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     ADMIN_SEED_ROLE: str = "ADMIN"
 
     BOOKING_ADMIN_EMAIL: str | None = None
+    BOOKING_ADMIN_EMAIL_CC: str | None = None
     RECAPTCHA_SECRET: str | None = None
 
     MEDIA_DIR: str = "uploads"

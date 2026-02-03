@@ -25,23 +25,19 @@ async def send_email(
     subject: str,
     body: str,
     html_body: str | None = None,
+    cc_emails: list[str] | None = None,
 ) -> None:
     log = email_repo.create_log(db, to_email, subject, body)
     try:
-        if html_body:
-            message = MessageSchema(
-                subject=subject,
-                recipients=[to_email],
-                body=html_body,
-                subtype="html",
-            )
-        else:
-            message = MessageSchema(
-                subject=subject,
-                recipients=[to_email],
-                body=body,
-                subtype="plain",
-            )
+        message_kwargs = {
+            "subject": subject,
+            "recipients": [to_email],
+            "body": html_body if html_body else body,
+            "subtype": "html" if html_body else "plain",
+        }
+        if cc_emails:
+            message_kwargs["cc"] = cc_emails
+        message = MessageSchema(**message_kwargs)
         await mail_client.send_message(message)
         email_repo.update_log(db, log, status="SENT")
     except Exception as exc:

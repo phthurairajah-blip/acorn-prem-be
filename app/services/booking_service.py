@@ -32,6 +32,13 @@ async def create_booking(db: Session, data: BookingCreate, remote_ip: str | None
     admin_email = settings.BOOKING_ADMIN_EMAIL
     if not admin_email:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Admin email not configured")
+    cc_emails: list[str] | None = None
+    if settings.BOOKING_ADMIN_EMAIL_CC:
+        cc_emails = [
+            email.strip()
+            for email in settings.BOOKING_ADMIN_EMAIL_CC.split(",")
+            if email.strip()
+        ]
 
     subject, text_body, html_body = email_service.build_booking_email(
         name=booking.name,
@@ -42,11 +49,18 @@ async def create_booking(db: Session, data: BookingCreate, remote_ip: str | None
         preferred_location=booking.preferred_location,
         message=booking.message,
     )
-    await email_service.send_email(db, admin_email, subject, text_body, html_body=html_body)
+    await email_service.send_email(
+        db,
+        admin_email,
+        subject,
+        text_body,
+        html_body=html_body,
+        cc_emails=cc_emails,
+    )
 
 
-def list_bookings(db: Session):
-    return booking_repo.list_bookings(db)
+def list_bookings(db: Session, skip: int = 0, limit: int = 12):
+    return booking_repo.list_bookings(db, skip=skip, limit=limit)
 
 
 def get_booking(db: Session, booking_id):

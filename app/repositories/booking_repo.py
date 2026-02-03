@@ -20,8 +20,14 @@ def create(db: Session, data: BookingCreate) -> Booking:
     return booking
 
 
-def list_bookings(db: Session) -> list[Booking]:
-    return db.query(Booking).order_by(Booking.created_at.desc()).all()
+def list_bookings(db: Session, skip: int = 0, limit: int = 12) -> list[Booking]:
+    return (
+        db.query(Booking)
+        .order_by(Booking.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_by_id(db: Session, booking_id: UUID) -> Booking | None:
