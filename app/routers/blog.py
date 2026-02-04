@@ -80,7 +80,6 @@ def create_blog(
     content_html: str = Form(...),
     category_id: UUID = Form(...),
     status_value: str = Form("DRAFT"),
-    excerpt_html: str = Form(...),
     image_url: str | None = Form(None),
     image_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -98,7 +97,6 @@ def create_blog(
 
     payload = BlogCreate(
         title=title,
-        excerpt_html=excerpt_html,
         content_html=content_html,
         category_id=category_id,
         status=status_value,
@@ -115,7 +113,6 @@ def update_blog(
     content_html: str | None = Form(None),
     category_id: UUID | None = Form(None),
     status_value: str | None = Form(None),
-    excerpt_html: str | None = Form(None),
     image_url: str | None = Form(None),
     image_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
@@ -136,7 +133,6 @@ def update_blog(
 
     payload = BlogUpdate(
         title=title,
-        excerpt_html=excerpt_html,
         content_html=content_html,
         category_id=category_id,
         status=status_value,

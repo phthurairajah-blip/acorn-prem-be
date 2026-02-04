@@ -10,7 +10,6 @@ class Blog(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    excerpt_html: Mapped[str | None] = mapped_column(Text, nullable=True)
     content_html: Mapped[str] = mapped_column(Text, nullable=False)
 
     status: Mapped[str] = mapped_column(String(20), default="DRAFT")  # DRAFT | PUBLISHED

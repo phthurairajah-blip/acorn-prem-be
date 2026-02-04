@@ -7,7 +7,6 @@ from app.schemas.blog import BlogCreate, BlogUpdate
 def create(db: Session, author_id: UUID, data: BlogCreate) -> Blog:
     blog = Blog(
         title=data.title,
-        excerpt_html=data.excerpt_html,
         content_html=data.content_html,
         category_id=data.category_id,
         status=data.status,
@@ -53,8 +52,6 @@ def get_published_blog(db: Session, blog_id: UUID) -> Blog | None:
 def update(db: Session, blog: Blog, data: BlogUpdate) -> Blog:
     if data.title is not None:
         blog.title = data.title
-    if data.excerpt_html is not None:
-        blog.excerpt_html = data.excerpt_html
     if data.content_html is not None:
         blog.content_html = data.content_html
     if data.category_id is not None:

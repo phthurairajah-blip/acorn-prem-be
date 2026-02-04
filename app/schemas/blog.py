@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 class BlogCreate(BaseModel):
     title: str
-    excerpt_html: str
     content_html: str
     category_id: UUID
     status: str = "DRAFT"
@@ -15,7 +14,6 @@ class BlogCreate(BaseModel):
 
 class BlogUpdate(BaseModel):
     title: str | None = None
-    excerpt_html: str | None = None
     content_html: str | None = None
     category_id: UUID | None = None
     status: str | None = None
@@ -25,7 +23,6 @@ class BlogUpdate(BaseModel):
 class BlogOut(BaseModel):
     id: UUID
     title: str
-    excerpt_html: str
     content_html: str
     status: str
     image_url: str | None = None

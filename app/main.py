@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import inspect, text
 
 from app.core.config import settings
 from app.db.base import Base
@@ -32,6 +33,19 @@ app.add_middleware(
 app.mount("/media", StaticFiles(directory=settings.MEDIA_DIR), name="media")
 
 
+def _drop_excerpt_column_if_present() -> None:
+    inspector = inspect(engine)
+    if "blogs" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("blogs")}
+    if "excerpt_html" not in columns:
+        return
+    if engine.dialect.name != "postgresql":
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE blogs DROP COLUMN IF EXISTS excerpt_html"))
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:
     message = exc.detail if isinstance(exc.detail, str) else "Request failed."
@@ -54,6 +68,7 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError) 
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    _drop_excerpt_column_if_present()
     db = SessionLocal()
     try:
         auth_service.ensure_default_admin(db)
