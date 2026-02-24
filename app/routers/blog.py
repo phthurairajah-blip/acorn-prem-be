@@ -20,10 +20,11 @@ def _save_image(file: UploadFile) -> str:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Invalid image file")
     ext = Path(file.filename).suffix.lower()
-    if ext not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
+    if ext not in {".png", ".jpg", ".jpeg"}:
         raise HTTPException(status_code=400, detail="Unsupported image type")
-    if file.size is not None and file.size > 3 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Image must be 3 MB or smaller")
+    content = file.file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image must be 5 MB or smaller")
 
     media_root = Path(settings.MEDIA_DIR) / "blogs"
     media_root.mkdir(parents=True, exist_ok=True)
@@ -31,9 +32,14 @@ def _save_image(file: UploadFile) -> str:
     filename = f"{uuid.uuid4().hex}{ext}"
     file_path = media_root / filename
     with file_path.open("wb") as buffer:
-        buffer.write(file.file.read())
+        buffer.write(content)
 
     return f"/media/blogs/{filename}"
+
+
+def _is_allowed_image_url(candidate: str) -> bool:
+    path = candidate.split("?", 1)[0].lower()
+    return path.endswith((".png", ".jpg", ".jpeg"))
 
 
 def _normalize_image_url(image_url: str | None) -> str | None:
@@ -43,9 +49,13 @@ def _normalize_image_url(image_url: str | None) -> str | None:
     if not candidate:
         return None
     if candidate.startswith("/"):
+        if not _is_allowed_image_url(candidate):
+            raise HTTPException(status_code=400, detail="Image URL must end with .png, .jpg, or .jpeg")
         return candidate
     parsed = urlparse(candidate)
     if parsed.scheme in {"http", "https"} and parsed.netloc:
+        if not _is_allowed_image_url(parsed.path):
+            raise HTTPException(status_code=400, detail="Image URL must end with .png, .jpg, or .jpeg")
         return candidate
     raise HTTPException(status_code=400, detail="Image URL must be a valid http(s) URL or a /media path")
 
