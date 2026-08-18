@@ -1,10 +1,11 @@
 import os
+import re
 from urllib.parse import urlparse
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import inspect, text
 
 from app.core.config import settings
@@ -37,6 +38,21 @@ def _cors_origins() -> list[str]:
     return sorted({origin for origin in normalized if origin})
 
 
+def _is_allowed_origin(origin: str) -> bool:
+    return origin in _cors_origins() or re.fullmatch(
+        r"https://([a-zA-Z0-9-]+\.)?drpremgastro\.sg",
+        origin,
+    )
+
+
+def _apply_cors_headers(response: Response, origin: str | None) -> Response:
+    if origin and _is_allowed_origin(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Vary"] = "Origin"
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
@@ -45,6 +61,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_cors_headers_to_all_responses(request: Request, call_next):
+    origin = request.headers.get("origin")
+    try:
+        response = await call_next(request)
+    except Exception:
+        response = JSONResponse(
+            status_code=500,
+            content={"status": 500, "message": "Internal server error."},
+        )
+    return _apply_cors_headers(response, origin)
+
 
 app.mount("/media", StaticFiles(directory=settings.MEDIA_DIR), name="media")
 
