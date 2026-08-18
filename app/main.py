@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,15 +17,30 @@ os.makedirs(settings.MEDIA_DIR, exist_ok=True)
 
 app = FastAPI(title=settings.APP_NAME)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+
+def _origin_from_url(value: str) -> str | None:
+    parsed = urlparse(value.strip().strip(","))
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _cors_origins() -> list[str]:
+    origins = [
         settings.FRONTEND_URL,
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://drpremgastro.sg",
-        "https://www.drpremgastro.sg"
-    ],
+        "https://www.drpremgastro.sg",
+    ]
+    normalized = [_origin_from_url(origin) for origin in origins]
+    return sorted({origin for origin in normalized if origin})
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)?drpremgastro\.sg",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

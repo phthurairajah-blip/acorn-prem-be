@@ -4,19 +4,34 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.repositories import email_repo
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=settings.MAIL_USERNAME,
-    MAIL_PASSWORD=settings.MAIL_PASSWORD,
-    MAIL_FROM=settings.MAIL_FROM,
-    MAIL_PORT=settings.MAIL_PORT,
-    MAIL_SERVER=settings.MAIL_SERVER,
-    MAIL_STARTTLS=settings.MAIL_STARTTLS,
-    MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True,
-)
 
-mail_client = FastMail(conf)
+def _mail_client() -> FastMail:
+    missing_settings = [
+        name
+        for name, value in {
+            "MAIL_USERNAME": settings.MAIL_USERNAME,
+            "MAIL_PASSWORD": settings.MAIL_PASSWORD,
+            "MAIL_FROM": settings.MAIL_FROM,
+            "MAIL_SERVER": settings.MAIL_SERVER,
+        }.items()
+        if not value
+    ]
+    if missing_settings:
+        missing = ", ".join(missing_settings)
+        raise RuntimeError(f"Mail settings are not configured: {missing}")
+
+    conf = ConnectionConfig(
+        MAIL_USERNAME=settings.MAIL_USERNAME,
+        MAIL_PASSWORD=settings.MAIL_PASSWORD,
+        MAIL_FROM=settings.MAIL_FROM,
+        MAIL_PORT=settings.MAIL_PORT,
+        MAIL_SERVER=settings.MAIL_SERVER,
+        MAIL_STARTTLS=settings.MAIL_STARTTLS,
+        MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
+        USE_CREDENTIALS=True,
+        VALIDATE_CERTS=True,
+    )
+    return FastMail(conf)
 
 
 async def send_email(
@@ -38,7 +53,7 @@ async def send_email(
         if cc_emails:
             message_kwargs["cc"] = cc_emails
         message = MessageSchema(**message_kwargs)
-        await mail_client.send_message(message)
+        await _mail_client().send_message(message)
         email_repo.update_log(db, log, status="SENT")
     except Exception as exc:
         email_repo.update_log(db, log, status="FAILED", error_message=str(exc))
