@@ -5,6 +5,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "acorn-prem-be"
     ENV: str = "local"
+    RELOAD: bool = False
     DATABASE_URL: str
 
     JWT_SECRET: str
